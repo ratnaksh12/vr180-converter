@@ -22,10 +22,14 @@ def convert_to_vr180(input_path, output_path):
 
     # Step 2: Inject VR180 metadata (fixed args)
     cmd2 = [
-        sys.executable, "-m", "spatialmedia",
-        "-i", "--stereo=top-bottom", "--projection=180",
-        temp_path, output_path
-    ]
+    sys.executable, "-m", "spatialmedia",
+    "-i",
+    "--stereo=top-bottom",
+    "--projection=equirectangular",
+    temp_path,
+    output_path
+]
+
     subprocess.run(cmd2, check=True)
 
     # Cleanup

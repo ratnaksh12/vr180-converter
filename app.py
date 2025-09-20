@@ -3,6 +3,7 @@ import cv2
 import numpy as np
 import tempfile
 import os
+import subprocess
 
 # ---------------- Depth Stub (fast CPU fallback) ----------------
 def fake_depth_map(frame):
@@ -86,14 +87,17 @@ def apply_disc_containment(frame, blur_strength=12, feather=0.35):
     return contained
 
 # ---------------- Main Pipeline ----------------
-def process_video_pipeline(input_path, output_path, fps=30, eye_w=480, eye_h=480):
+def process_video_pipeline(input_path, output_path, fps=30, eye_w=2880, eye_h=2880):
     barrel_k = -0.05
     vignette_strength = 2.0
     fovea_radius = 0.85
 
+    # temp silent video
+    temp_video = output_path.replace(".mp4", "_silent.mp4")
+
     cap = cv2.VideoCapture(input_path)
     fourcc = cv2.VideoWriter_fourcc(*'mp4v')
-    out = cv2.VideoWriter(output_path, fourcc, fps, (eye_w*2, eye_h))
+    out = cv2.VideoWriter(temp_video, fourcc, fps, (eye_w*2, eye_h))
 
     while True:
         ret, frame = cap.read()
@@ -128,8 +132,26 @@ def process_video_pipeline(input_path, output_path, fps=30, eye_w=480, eye_h=480
     cap.release()
     out.release()
 
+    # ---- Add Audio Back with ffmpeg ----
+    try:
+        cmd = [
+            "ffmpeg", "-y",
+            "-i", temp_video,
+            "-i", input_path,
+            "-c:v", "copy",
+            "-c:a", "aac",
+            "-map", "0:v:0",
+            "-map", "1:a:0",
+            output_path
+        ]
+        subprocess.run(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        os.remove(temp_video)  # cleanup
+    except Exception as e:
+        print("⚠️ ffmpeg audio merge failed:", e)
+        os.rename(temp_video, output_path)
+
 # ---------------- Streamlit UI ----------------
-st.title("🎥 Palace – 2D → VR180 (Disc Contained Preview)")
+st.title("🎥 Palace – 2D → VR180 (with Audio)")
 
 uploaded_file = st.file_uploader("Upload your 2D video", type=["mp4", "mov", "avi", "mkv"])
 
@@ -141,10 +163,10 @@ if uploaded_file:
     output_path = os.path.join(tempfile.gettempdir(), "output_vr180_disc.mp4")
 
     if st.button("🚀 Start Conversion"):
-        with st.spinner("Processing with all effects…"):
+        with st.spinner("Processing with all effects + audio…"):
             process_video_pipeline(input_path, output_path)
 
-        st.success("✅ Conversion complete!")
+        st.success("✅ Conversion complete with audio!")
         st.video(output_path)
         with open(output_path, "rb") as f:
             st.download_button("⬇️ Download VR180 Video", f, file_name="vr180_disc.mp4")

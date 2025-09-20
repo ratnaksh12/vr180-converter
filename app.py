@@ -87,7 +87,7 @@ def apply_disc_containment(frame, blur_strength=12, feather=0.35):
     return contained
 
 # ---------------- Main Pipeline ----------------
-def process_video_pipeline(input_path, output_path, fps=30, eye_w=2880, eye_h=2880):
+def process_video_pipeline(input_path, output_path, fps=30, eye_w=480, eye_h=480):
     barrel_k = -0.05
     vignette_strength = 2.0
     fovea_radius = 0.85
@@ -151,7 +151,7 @@ def process_video_pipeline(input_path, output_path, fps=30, eye_w=2880, eye_h=28
         os.rename(temp_video, output_path)
 
 # ---------------- Streamlit UI ----------------
-st.title("🎥 Palace – 2D → VR180 (with Audio)")
+st.title("🎥 Palace – 2D → VR180 Converter")
 
 uploaded_file = st.file_uploader("Upload your 2D video", type=["mp4", "mov", "avi", "mkv"])
 
@@ -163,10 +163,10 @@ if uploaded_file:
     output_path = os.path.join(tempfile.gettempdir(), "output_vr180_disc.mp4")
 
     if st.button("🚀 Start Conversion"):
-        with st.spinner("Processing with all effects + audio…"):
+        with st.spinner("Processing with all effects"):
             process_video_pipeline(input_path, output_path)
 
-        st.success("✅ Conversion complete with audio!")
+        st.success("✅ Conversion completed!")
         st.video(output_path)
         with open(output_path, "rb") as f:
             st.download_button("⬇️ Download VR180 Video", f, file_name="vr180_disc.mp4")

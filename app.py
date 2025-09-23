@@ -157,7 +157,7 @@ def process_video_pipeline(input_path, output_path, fps=30, eye_w=960, eye_h=960
             pass
 
 # ---------------- Streamlit UI ----------------
-st.title("🎥 Palace – 2D → VR180 SBS Converter")
+st.title("🎥 Palace – 2D → VR180 Converter")
 
 uploaded_file = st.file_uploader("Upload your 2D video", type=["mp4", "mov", "avi", "mkv"])
 

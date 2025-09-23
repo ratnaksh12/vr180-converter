@@ -4,6 +4,7 @@ import numpy as np
 import tempfile
 import os
 import subprocess
+import shutil
 
 # ---------------- Depth Stub (fast CPU fallback) ----------------
 def fake_depth_map(frame):
@@ -126,6 +127,7 @@ def process_video_pipeline(input_path, output_path, fps=30, eye_w=960, eye_h=960
                 start_radius=fovea_radius)
         )
 
+        # --- Side by Side (SBS) ---
         stereo_frame = np.hstack((left_eye, right_eye))
         out.write(stereo_frame)
 
@@ -144,14 +146,18 @@ def process_video_pipeline(input_path, output_path, fps=30, eye_w=960, eye_h=960
             "-map", "1:a:0",
             output_path
         ]
-        subprocess.run(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        subprocess.run(cmd, check=True)
         os.remove(temp_video)  # cleanup
     except Exception as e:
         print("⚠️ ffmpeg audio merge failed:", e)
-        os.rename(temp_video, output_path)
+        shutil.copy(temp_video, output_path)  # fallback copy
+        try:
+            os.remove(temp_video)
+        except:
+            pass
 
 # ---------------- Streamlit UI ----------------
-st.title("🎥 Palace – 2D → VR180 Converter")
+st.title("🎥 Palace – 2D → VR180 SBS Converter")
 
 uploaded_file = st.file_uploader("Upload your 2D video", type=["mp4", "mov", "avi", "mkv"])
 
@@ -160,13 +166,13 @@ if uploaded_file:
         tmp_in.write(uploaded_file.read())
         input_path = tmp_in.name
 
-    output_path = os.path.join(tempfile.gettempdir(), "output_vr180_disc.mp4")
+    output_path = os.path.join(tempfile.gettempdir(), "output_vr180_sbs.mp4")
 
     if st.button("🚀 Start Conversion"):
-        with st.spinner("Processing with all effects"):
+        with st.spinner("Processing with fisheye, vignette, disc containment…"):
             process_video_pipeline(input_path, output_path)
 
         st.success("✅ Conversion completed!")
         st.video(output_path)
         with open(output_path, "rb") as f:
-            st.download_button("⬇️ Download VR180 Video", f, file_name="vr180_disc.mp4")
+            st.download_button("⬇️ Download VR180 SBS Video", f, file_name="vr180_sbs.mp4")

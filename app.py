@@ -87,7 +87,7 @@ def apply_disc_containment(frame, blur_strength=12, feather=0.35):
     return contained
 
 # ---------------- Main Pipeline ----------------
-def process_video_pipeline(input_path, output_path, fps=30, eye_w=480, eye_h=480):
+def process_video_pipeline(input_path, output_path, fps=30, eye_w=960, eye_h=960):
     barrel_k = -0.05
     vignette_strength = 2.0
     fovea_radius = 0.85
